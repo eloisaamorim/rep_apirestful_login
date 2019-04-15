@@ -1,11 +1,9 @@
 package com.desafiopitang.apirestful.resources;
 
 import java.util.Date;
-import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,16 +17,18 @@ import com.desafiopitang.apirestful.models.ErrorMessage;
 import com.desafiopitang.apirestful.models.Usuario;
 import com.desafiopitang.apirestful.models.UsuarioSignin;
 import com.desafiopitang.apirestful.repository.UsuarioRepository;
+import com.desafiopitang.apirestful.util.Util;
 
 @RestController
-@RequestMapping(value = "/api")
+@RequestMapping
 public class UsuarioResource {
 
 	@Autowired
 	UsuarioRepository usuarioRepository;
 
+
 	@GetMapping("/all")
-	public List<Usuario> listaUsuarios() {
+	public Object listaUsuarios() {
 		return usuarioRepository.findAll();
 	}
 
@@ -38,6 +38,9 @@ public class UsuarioResource {
 	@ResponseStatus(HttpStatus.OK)
 	public Object salvarUsuario(@RequestBody Usuario usuario) {
 	try {
+		
+		usuario.setPassword(Util.getSenhaCriptografada(usuario.getPassword()));
+		
 		usuario.setCreated_at(new Date());
 		
 		if((usuario.getEmail() == null || usuario.getEmail().isEmpty() ) || (usuario.getPassword() == null || usuario.getPassword().isEmpty() )){
@@ -79,6 +82,7 @@ public class UsuarioResource {
 	@ResponseStatus(HttpStatus.OK)
 	public Object efetuarLogin(@RequestBody UsuarioSignin usuarioSignin) {
 	
+		usuarioSignin.setPassword(Util.getSenhaCriptografada(usuarioSignin.getPassword()));
 		Usuario usuario = usuarioRepository.findByEmailAndPassword(usuarioSignin.getEmail(), usuarioSignin.getPassword());
 		if( usuario == null) {
 			ErrorMessage erro = new ErrorMessage("Invalid e-mail or password",HttpStatus.FORBIDDEN.value());

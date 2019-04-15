@@ -1,8 +1,14 @@
 package com.desafiopitang.apirestful.models;
 
-import java.time.LocalDate;
-
 public class UsuarioSignin {
+
+	public void setEmail(String email) {
+		this.email = email;
+	}
+
+	public void setPassword(String password) {
+		this.password = password;
+	}
 
 	private String email;
 
