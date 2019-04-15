@@ -2,6 +2,7 @@ package com.desafiopitang.apirestful.resources;
 
 import java.util.Date;
 
+import org.apache.tomcat.util.json.Token;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -108,8 +109,8 @@ public class UsuarioResource {
 
 	//consulta informações do usuário
 	//FIXME - PITANG - TOKEN NO HEADER
-	@GetMapping("/me")
-	public Object getUsuario(@RequestHeader String tokenHeader) {
+	@GetMapping("/meToken")
+	public Object getUsuario(@RequestHeader Token tokenHeader) {
 		Usuario usuario = new Usuario();
 		
 		if( usuario == null) {
@@ -124,9 +125,9 @@ public class UsuarioResource {
 	}
 	
 	
-	@GetMapping("/me/{id}")
-	public Object getUsuario(@PathVariable(value = "id") long id) {
-		Usuario usuario = usuarioRepository.findById(id);
+	@GetMapping("/me")
+	public Object getUsuario(@RequestHeader String email) {
+		Usuario usuario = usuarioRepository.findByEmail(email);
 		if( usuario == null) {
 			ErrorMessage erro = new ErrorMessage("Unauthorized",HttpStatus.FORBIDDEN.value());
 			return erro;
