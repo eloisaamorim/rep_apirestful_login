@@ -12,6 +12,7 @@
 	<groupId>com.desafiopitang</groupId>
 	<artifactId>apirestful</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
+	<packaging>jar</packaging>
 	<name>apirestful</name>
 	<description>API RESTful de Usuários + login</description>
 
@@ -62,7 +63,7 @@
 						<web>java $JAVA_OPTS -cp target/classes:target/dependency/* Main</web>
 					</processTypes>
 				</configuration>
-				
+
 			</plugin>
 		</plugins>
 
