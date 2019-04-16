@@ -17,11 +17,14 @@ import javax.persistence.JoinColumn;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
+import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 
+import com.desafiopitang.apirestful.util.Constantes;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonProperty.Access;
 
@@ -43,16 +46,20 @@ public class Usuario implements Serializable {
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	private Long id;
 
+	@NotBlank(message = Constantes.MISSING_FIELDS)
 	@Column(nullable = false)
 	private String firstName;
 
+	@NotBlank(message = Constantes.MISSING_FIELDS)
 	@Column(nullable = false)
 	private String lastName;
 
-	@NotBlank
+	@NotBlank(message = Constantes.MISSING_FIELDS)
 	@Column(unique = true, nullable = false)
+	@Email(message = Constantes.INVALID_FIELDS)
 	private String email;
 
+	@NotBlank(message = Constantes.MISSING_FIELDS)
 	@Column(nullable = false)
 	@JsonProperty(access = Access.WRITE_ONLY)
 	private String password;

@@ -2,18 +2,25 @@ package com.desafiopitang.apirestful.models;
 
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
+
+import com.desafiopitang.apirestful.util.Constantes;
 
 @Embeddable
 public class Phones  {
+	
+	@NotBlank(message = Constantes.MISSING_FIELDS)
 	@Column(nullable = false)
     @Size(max = 10)
 	private Number number;
     
+	@NotBlank(message = Constantes.MISSING_FIELDS)
     @Column(nullable = false)
     @Size(max = 2)
 	private Number area_code;
     
+	@NotBlank(message = Constantes.MISSING_FIELDS)
     @Column(nullable = false)
     @Size(max = 3)
 	private String country_code;
