@@ -82,7 +82,7 @@ public class UsuarioResource {
 
 	// efetuar login
 	// FIXME - PITANG - RETORNAR TOKEN
-	@GetMapping("/signin")
+	@PostMapping("/signin")
 	@ResponseStatus(HttpStatus.OK)
 	public Object efetuarLogin(@RequestBody UsuarioSignin usuarioSignin) {
 
@@ -112,17 +112,38 @@ public class UsuarioResource {
 
 	// consulta informações do usuário
 	// FIXME - PITANG - TOKEN NO HEADER
-	@GetMapping("/meToken")
-	public Object getUsuario(@RequestHeader Jwt jwt) {
-		// TODO NÃO IMPLEMENTADO COM TOKEN
-
-//		ErrorMessage erro = new ErrorMessage(Constantes.UNAUTHORIZED, HttpStatus.FORBIDDEN.value());
-
-		ErrorMessage erro = new ErrorMessage(Constantes.UNAUTHORIZED_INVALID_SESSION, HttpStatus.FORBIDDEN.value());
+	@GetMapping("/me")
+	public Object getUsuario(@RequestHeader String authorization) {
+		ErrorMessage erro = null;
+		
+		if(authorization == null || authorization.isEmpty()) {
+			erro = new ErrorMessage(Constantes.UNAUTHORIZED, HttpStatus.FORBIDDEN.value());
+		} else {
+			//simulando um token com sessão expirada
+			 erro = new ErrorMessage(Constantes.UNAUTHORIZED_INVALID_SESSION, HttpStatus.FORBIDDEN.value());
+		}
+		
+		// //TODO NÃO IMPLEMENTADO COM TOKEN
+//		else {
+//		//	 faz parse do token
+//			String email = Jwts.parser()
+//					.setSigningKey(Constantes.SECRET)
+//					.parseClaimsJws(authorization.replace(Constantes.TOKEN_PREFIX, ""))
+//					.getBody()
+//					.getSubject();
+//			
+//			if (email != null) {
+//				Usuario usuario = usuarioRepository.findByEmail(email);
+//				
+//				return usuario;
+//			}
+//		} 
+//token expirado
+//		ErrorMessage erro = new ErrorMessage(Constantes.UNAUTHORIZED_INVALID_SESSION, HttpStatus.FORBIDDEN.value());
 		return erro;
 	}
 
-	@GetMapping("/me")
+	@GetMapping("/me2")
 	public Object getUsuario(@RequestHeader String email, @RequestHeader String password) {
 
 		if (password != null) {
