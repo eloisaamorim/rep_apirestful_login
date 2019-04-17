@@ -7,7 +7,6 @@ import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.security.oauth2.resource.OAuth2ResourceServerProperties.Jwt;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,6 +24,11 @@ import com.desafiopitang.apirestful.repository.UsuarioRepository;
 import com.desafiopitang.apirestful.util.Constantes;
 import com.desafiopitang.apirestful.util.Util;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+
 @RestController
 @RequestMapping
 public class UsuarioResource {
@@ -37,8 +41,11 @@ public class UsuarioResource {
 		return usuarioRepository.findAll();
 	}
 
-	// cadastra usuário
-	// FIXME - PITANG - RETORNAR TOKEN
+	/*
+	 * { "firstName": "Teste", "lastName": "JWT", "email": "jwt2@teste.com",
+	 * "password": "password", "phones": [ { "number": 988887888, "area_code": 81,
+	 * "country_code": "+55" } ] }
+	 */
 	@PostMapping("/signup")
 	@ResponseStatus(HttpStatus.OK)
 	public Object salvarUsuario(@RequestBody Usuario usuario) {
@@ -47,11 +54,15 @@ public class UsuarioResource {
 			if (usuario.getPassword() != null) {
 				usuario.setPassword(Util.getSenhaCriptografada(usuario.getPassword()));
 			}
-			usuario.setCreated_at(new Date());
+			usuario.setCreated_at(new Date(System.currentTimeMillis()));
 
-			Usuario usuario2 = usuarioRepository.save(usuario);
+			usuarioRepository.save(usuario);
 
-			return usuario2;
+			String token = Jwts.builder().setSubject(usuario.getEmail()).claim("usuario", usuario)
+					.claim("password", usuario.getPassword()).signWith(SignatureAlgorithm.HS512, Constantes.SECRET_KEY)
+					.setExpiration(Util.getExpirationToken(Constantes.QTD_MIN_EXPIRAR_TOKEN)).compact();
+
+			return token;
 		} catch (DataIntegrityViolationException duplicado) {
 			// TODO - NÃO ESTÁ TRATANDO QUANDO VEM COM TELEFONE VAZIO, CAI NESSA EXCEÇÃO
 			ErrorMessage erro = new ErrorMessage(Constantes.EMAIL_ALREADY_EXISTS, HttpStatus.BAD_REQUEST.value());
@@ -68,20 +79,14 @@ public class UsuarioResource {
 				}
 				break;
 			}
-
 			return erro;
 		}
-		// TODO deve retornar token
+
 	}
 
 	/*
-	 * { "firstName": "Hello2", "lastName": "World2", "email": "teste@teste.com",
-	 * "password": "hunter", "phones": [ { "number": 988887888, "area_code": 81,
-	 * "country_code": "+55" } ] }
+	 * { "email": "jwt2@teste.com", "password": "password"}
 	 */
-
-	// efetuar login
-	// FIXME - PITANG - RETORNAR TOKEN
 	@PostMapping("/signin")
 	@ResponseStatus(HttpStatus.OK)
 	public Object efetuarLogin(@RequestBody UsuarioSignin usuarioSignin) {
@@ -92,55 +97,43 @@ public class UsuarioResource {
 		Usuario usuario = usuarioRepository.findByEmailAndPassword(usuarioSignin.getEmail(),
 				usuarioSignin.getPassword());
 		if (usuario == null) {
-			ErrorMessage erro = new ErrorMessage(Constantes.INVALID_EMAIL_PASSWORD, HttpStatus.FORBIDDEN.value());
-			return erro;
+			return new ErrorMessage(Constantes.INVALID_EMAIL_PASSWORD, HttpStatus.FORBIDDEN.value());
 		} else if ((usuarioSignin.getEmail() == null || usuarioSignin.getEmail().isEmpty())
 				|| (usuarioSignin.getPassword() == null || usuarioSignin.getPassword().isEmpty())) {
-			ErrorMessage erro = new ErrorMessage(Constantes.MISSING_FIELDS, HttpStatus.BAD_REQUEST.value());
-			return erro;
+			return new ErrorMessage(Constantes.MISSING_FIELDS, HttpStatus.BAD_REQUEST.value());
 		} else {
-			usuario.setUpdate_at(new Date());
+			usuario.setUpdate_at(new Date(System.currentTimeMillis()));
 			usuarioRepository.save(usuario);
-			return usuario;
+			String token = Jwts.builder().setSubject(usuario.getEmail()).claim("usuario", usuario)
+					.claim("password", usuarioSignin.getPassword())
+					.signWith(SignatureAlgorithm.HS512, Constantes.SECRET_KEY)
+					.setExpiration(Util.getExpirationToken(Constantes.QTD_MIN_EXPIRAR_TOKEN)).compact();
+
+			return token;
 		}
 
-		// TODO deve retornar token
-		/*
-		 * { "email": "teste@teste.com", "password": "hunter" }
-		 */
 	}
 
-	// consulta informações do usuário
-	// FIXME - PITANG - TOKEN NO HEADER
 	@GetMapping("/me")
 	public Object getUsuario(@RequestHeader String authorization) {
-		ErrorMessage erro = null;
-		
-		if(authorization == null || authorization.isEmpty()) {
-			erro = new ErrorMessage(Constantes.UNAUTHORIZED, HttpStatus.FORBIDDEN.value());
+
+		if (authorization == null || authorization.isEmpty()) {
+			return new ErrorMessage(Constantes.UNAUTHORIZED, HttpStatus.FORBIDDEN.value());
 		} else {
-			//simulando um token com sessão expirada
-			 erro = new ErrorMessage(Constantes.UNAUTHORIZED_INVALID_SESSION, HttpStatus.FORBIDDEN.value());
-		}
-		
-		// //TODO NÃO IMPLEMENTADO COM TOKEN
-//		else {
-//		//	 faz parse do token
-//			String email = Jwts.parser()
-//					.setSigningKey(Constantes.SECRET)
-//					.parseClaimsJws(authorization.replace(Constantes.TOKEN_PREFIX, ""))
-//					.getBody()
-//					.getSubject();
-//			
-//			if (email != null) {
-//				Usuario usuario = usuarioRepository.findByEmail(email);
-//				
-//				return usuario;
-//			}
-//		} 
-//token expirado
-//		ErrorMessage erro = new ErrorMessage(Constantes.UNAUTHORIZED_INVALID_SESSION, HttpStatus.FORBIDDEN.value());
-		return erro;
+			try {
+				Claims claims = Jwts.parser().setSigningKey(Constantes.SECRET_KEY).parseClaimsJws(authorization).getBody();
+			
+				Usuario usuario = usuarioRepository.findByEmailAndPassword(claims.getSubject(),
+						claims.get("password").toString());
+
+				return usuario;
+			}catch (ExpiredJwtException ex){
+				return new ErrorMessage(Constantes.UNAUTHORIZED_INVALID_SESSION, HttpStatus.FORBIDDEN.value());
+			}
+
+				
+			}
+
 	}
 
 	@GetMapping("/me2")

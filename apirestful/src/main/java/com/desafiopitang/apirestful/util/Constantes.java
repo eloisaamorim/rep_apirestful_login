@@ -14,4 +14,13 @@ public class Constantes {
 
 	public static final String UNAUTHORIZED_INVALID_SESSION = "Unauthorized - invalid session!";
 
+	public static final long ONE_MINUTE_IN_MILLIS=60000;//millisecs
+
+	public static final String SECRET_KEY = "DesafioPitang";
+	
+	public static final String TOKEN_PREFIX = "Bearer";
+	
+	public static final String HEADER_STRING = "Authorization";
+	
+	public static final int QTD_MIN_EXPIRAR_TOKEN = 10;
 }
